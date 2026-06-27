@@ -1,5 +1,6 @@
 package com.platform.boardservice.post;
 
+import com.platform.boardservice.comment.CommentRepository;
 import com.platform.boardservice.common.NotFoundException;
 import com.platform.boardservice.post.dto.PostCreateRequest;
 import com.platform.boardservice.post.dto.PostResponse;
@@ -17,10 +18,12 @@ public class PostService {
 
     private final PostRepository repository;
     private final AccessGuard accessGuard;
+    private final CommentRepository commentRepository;
 
-    public PostService(PostRepository repository, AccessGuard accessGuard) {
+    public PostService(PostRepository repository, AccessGuard accessGuard, CommentRepository commentRepository) {
         this.repository = repository;
         this.accessGuard = accessGuard;
+        this.commentRepository = commentRepository;
     }
 
     @Transactional
@@ -52,6 +55,7 @@ public class PostService {
     public void delete(Long id, Authentication auth) {
         Post post = find(id);
         accessGuard.requireOwnerOrAdmin(post.getAuthorId(), auth);
+        commentRepository.deleteByPostId(id); // 글 삭제 시 댓글 cascade 정리(H2/PG 모두 보장)
         repository.delete(post);
     }
 
