@@ -1,0 +1,20 @@
+server:
+  port: 9100
+spring:
+  application:
+    name: board-service
+  datasource:
+    url: jdbc:postgresql://localhost:5433/boarddb
+    username: keycloak
+    password: keycloak
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:9000/.well-known/jwks.json
