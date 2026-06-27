@@ -4,6 +4,7 @@ import com.platform.boardservice.common.NotFoundException;
 import com.platform.boardservice.post.dto.PostCreateRequest;
 import com.platform.boardservice.post.dto.PostResponse;
 import com.platform.boardservice.post.dto.PostSummaryResponse;
+import com.platform.boardservice.post.dto.PostUpdateRequest;
 import com.platform.boardservice.security.AccessGuard;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -37,6 +38,21 @@ public class PostService {
     @Transactional(readOnly = true)
     public Page<PostSummaryResponse> list(Pageable pageable) {
         return repository.findAll(pageable).map(PostSummaryResponse::from);
+    }
+
+    @Transactional
+    public PostResponse update(Long id, PostUpdateRequest req, Authentication auth) {
+        Post post = find(id);
+        accessGuard.requireOwnerOrAdmin(post.getAuthorId(), auth);
+        post.edit(req.title(), req.content());
+        return PostResponse.from(post);
+    }
+
+    @Transactional
+    public void delete(Long id, Authentication auth) {
+        Post post = find(id);
+        accessGuard.requireOwnerOrAdmin(post.getAuthorId(), auth);
+        repository.delete(post);
     }
 
     Post find(Long id) {
