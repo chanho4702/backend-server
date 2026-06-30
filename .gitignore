@@ -1,0 +1,14 @@
+# build / deps
+.gradle/
+build/
+out/
+# IDE
+.idea/
+*.iml
+# gradle wrapper noise / caches
+caches/
+daemon/
+native/
+wrapper/
+# annotation-processor generated sources
+src/main/generated/
