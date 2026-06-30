@@ -37,7 +37,7 @@ class CommentControllerTest {
     }
 
     private Long createPost(long userId) throws Exception {
-        String body = mvc.perform(post("/api/posts").with(asUser(userId, "Alice"))
+        String body = mvc.perform(post("/api/board/posts").with(asUser(userId, "Alice"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"title\":\"t\",\"content\":\"c\"}"))
                 .andExpect(status().isCreated())
@@ -46,7 +46,7 @@ class CommentControllerTest {
     }
 
     private Long createComment(long postId, long userId) throws Exception {
-        String body = mvc.perform(post("/api/posts/" + postId + "/comments").with(asUser(userId, "Bob"))
+        String body = mvc.perform(post("/api/board/posts/" + postId + "/comments").with(asUser(userId, "Bob"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"content\":\"hi\"}"))
                 .andExpect(status().isCreated())
@@ -57,7 +57,7 @@ class CommentControllerTest {
     @Test
     void createRequiresAuth() throws Exception {
         Long postId = createPost(42L);
-        mvc.perform(post("/api/posts/" + postId + "/comments")
+        mvc.perform(post("/api/board/posts/" + postId + "/comments")
                         .contentType(MediaType.APPLICATION_JSON).content("{\"content\":\"hi\"}"))
                 .andExpect(status().isUnauthorized());
     }
@@ -66,7 +66,7 @@ class CommentControllerTest {
     void listIsPublic() throws Exception {
         Long postId = createPost(42L);
         createComment(postId, 7L);
-        mvc.perform(get("/api/posts/" + postId + "/comments"))
+        mvc.perform(get("/api/board/posts/" + postId + "/comments"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(1));
     }
@@ -75,7 +75,7 @@ class CommentControllerTest {
     void ownerCanUpdateComment() throws Exception {
         Long postId = createPost(42L);
         Long cid = createComment(postId, 7L);
-        mvc.perform(put("/api/comments/" + cid).with(asUser(7L, "Bob"))
+        mvc.perform(put("/api/board/comments/" + cid).with(asUser(7L, "Bob"))
                         .contentType(MediaType.APPLICATION_JSON).content("{\"content\":\"edited\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").value("edited"));
@@ -85,13 +85,13 @@ class CommentControllerTest {
     void otherUserGetsForbidden() throws Exception {
         Long postId = createPost(42L);
         Long cid = createComment(postId, 7L);
-        mvc.perform(delete("/api/comments/" + cid).with(asUser(8L, "Eve")))
+        mvc.perform(delete("/api/board/comments/" + cid).with(asUser(8L, "Eve")))
                 .andExpect(status().isForbidden());
     }
 
     @Test
     void commentOnMissingPostReturns404() throws Exception {
-        mvc.perform(post("/api/posts/999999/comments").with(asUser(7L, "Bob"))
+        mvc.perform(post("/api/board/posts/999999/comments").with(asUser(7L, "Bob"))
                         .contentType(MediaType.APPLICATION_JSON).content("{\"content\":\"hi\"}"))
                 .andExpect(status().isNotFound());
     }

@@ -40,7 +40,7 @@ class PostControllerTest {
     }
 
     private Long createPost(long userId) throws Exception {
-        String body = mvc.perform(post("/api/posts").with(asUser(userId, "Alice"))
+        String body = mvc.perform(post("/api/board/posts").with(asUser(userId, "Alice"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"title\":\"t\",\"content\":\"c\"}"))
                 .andExpect(status().isCreated())
@@ -50,19 +50,19 @@ class PostControllerTest {
 
     @Test
     void listIsPublic() throws Exception {
-        mvc.perform(get("/api/posts")).andExpect(status().isOk());
+        mvc.perform(get("/api/board/posts")).andExpect(status().isOk());
     }
 
     @Test
     void createRequiresAuth() throws Exception {
-        mvc.perform(post("/api/posts").contentType(MediaType.APPLICATION_JSON)
+        mvc.perform(post("/api/board/posts").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"title\":\"t\",\"content\":\"c\"}"))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     void blankTitleIsRejected() throws Exception {
-        mvc.perform(post("/api/posts").with(asUser(42L, "Alice"))
+        mvc.perform(post("/api/board/posts").with(asUser(42L, "Alice"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"title\":\"\",\"content\":\"c\"}"))
                 .andExpect(status().isBadRequest())
@@ -72,7 +72,7 @@ class PostControllerTest {
     @Test
     void ownerCanUpdate() throws Exception {
         Long id = createPost(42L);
-        mvc.perform(put("/api/posts/" + id).with(asUser(42L, "Alice"))
+        mvc.perform(put("/api/board/posts/" + id).with(asUser(42L, "Alice"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"title\":\"t2\",\"content\":\"c2\"}"))
                 .andExpect(status().isOk())
@@ -82,7 +82,7 @@ class PostControllerTest {
     @Test
     void otherUserGetsForbidden() throws Exception {
         Long id = createPost(42L);
-        mvc.perform(put("/api/posts/" + id).with(asUser(7L, "Mallory"))
+        mvc.perform(put("/api/board/posts/" + id).with(asUser(7L, "Mallory"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"title\":\"x\",\"content\":\"y\"}"))
                 .andExpect(status().isForbidden());
@@ -91,12 +91,12 @@ class PostControllerTest {
     @Test
     void adminCanDeleteOthersPost() throws Exception {
         Long id = createPost(42L);
-        mvc.perform(delete("/api/posts/" + id).with(asAdmin(1L, "Root")))
+        mvc.perform(delete("/api/board/posts/" + id).with(asAdmin(1L, "Root")))
                 .andExpect(status().isNoContent());
     }
 
     @Test
     void missingPostReturns404() throws Exception {
-        mvc.perform(get("/api/posts/999999")).andExpect(status().isNotFound());
+        mvc.perform(get("/api/board/posts/999999")).andExpect(status().isNotFound());
     }
 }
