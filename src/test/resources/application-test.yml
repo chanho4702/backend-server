@@ -14,3 +14,8 @@ spring:
       resourceserver:
         jwt:
           jwk-set-uri: http://localhost:9000/.well-known/jwks.json
+
+platform:
+  jwt:
+    issuer: http://localhost:9000
+    audience: platform-api

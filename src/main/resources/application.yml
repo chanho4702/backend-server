@@ -3,10 +3,11 @@ server:
 spring:
   application:
     name: board-service
+  # 모든 자격증명/URL은 env로 오버라이드 가능. 기본값은 로컬 dev 전용 — 운영에서는 반드시 주입.
   datasource:
-    url: jdbc:postgresql://localhost:5433/boarddb
-    username: keycloak
-    password: keycloak
+    url: ${BOARD_DB_URL:jdbc:postgresql://localhost:5433/boarddb}
+    username: ${BOARD_DB_USERNAME:keycloak}
+    password: ${BOARD_DB_PASSWORD:keycloak}
   jpa:
     hibernate:
       ddl-auto: validate
@@ -17,4 +18,10 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          jwk-set-uri: http://localhost:9000/.well-known/jwks.json
+          jwk-set-uri: ${AUTH_JWKS_URI:http://localhost:9000/.well-known/jwks.json}
+
+platform:
+  jwt:
+    # auth-server가 발급하는 자체 AT의 issuer/audience — 서명 외 추가 검증에 사용.
+    issuer: ${PLATFORM_ISSUER:http://localhost:9000}
+    audience: ${PLATFORM_AUDIENCE:platform-api}

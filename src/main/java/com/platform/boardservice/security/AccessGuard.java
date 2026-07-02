@@ -9,9 +9,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class AccessGuard {
 
-    /** JWT sub(=userId). */
+    /** JWT sub(=userId). 형식이 다른 토큰은 500이 아니라 403으로 거부. */
     public long currentUserId(Authentication auth) {
-        return Long.parseLong(auth.getName());
+        try {
+            return Long.parseLong(auth.getName());
+        } catch (NumberFormatException e) {
+            throw new AccessDeniedException("토큰 subject가 사용자 ID 형식이 아닙니다.");
+        }
     }
 
     /** JWT name claim(표시용). */
