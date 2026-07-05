@@ -20,6 +20,11 @@ spring:
         jwt:
           jwk-set-uri: ${AUTH_JWKS_URI:http://localhost:9000/.well-known/jwks.json}
 
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
+
 platform:
   jwt:
     # auth-server가 발급하는 자체 AT의 issuer/audience — 서명 외 추가 검증에 사용.

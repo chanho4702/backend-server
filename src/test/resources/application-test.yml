@@ -15,6 +15,11 @@ spring:
         jwt:
           jwk-set-uri: http://localhost:9000/.well-known/jwks.json
 
+# 단위 테스트는 유레카 서버 없이 돈다 — 등록 시도/에러 로그 차단
+eureka:
+  client:
+    enabled: false
+
 platform:
   jwt:
     issuer: http://localhost:9000
