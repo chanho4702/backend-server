@@ -1,0 +1,14 @@
+# dev 프로필 — 도커 풀스택과 나란히 실행 (포트 +10000).
+# JWKS는 dev auth(:19000)에서 받아 dev 클러스터 안에서 토큰 검증이 닫히게 한다.
+server:
+  port: 19100
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:19000/.well-known/jwks.json
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:18761/eureka
