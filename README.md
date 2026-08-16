@@ -3,7 +3,7 @@
 게시글과 댓글을 관리하는 **게시판 마이크로서비스** (`:9100`).
 모든 요청은 `gateway-server(:8000)`를 통해 `/api/board/**`로 라우팅된다.
 
-> 별도 git repo: `github.com/chanho4702/backend-server` (브랜치 `main`). 우산 repo(MSA_TEMPLATE)에서는 gitignore 됨.
+> 별도 git repo: [chanho4702/backend-server](https://github.com/chanho4702/backend-server). 전체 구성은 [infra-settings](https://github.com/chanho4702/infra-settings) 참고.
 
 이 서비스는 **도메인 서비스의 표준 패턴 예시**다. 유레카 자기등록 → 게이트웨이 뒤 라우팅 → auth-server JWT 자체 검증(JWKS) → JPA/Flyway 영속화로 이어지는 한 벌을 갖췄고, 새 도메인 서비스를 만들 때 이 구조를 복제한다. (맨 아래 [체크리스트](#복제해-새-도메인-서비스를-만들-때-바꿀-것) 참고.)
 
@@ -14,13 +14,15 @@
 - **게시글(Post)** CRUD — 목록 조회(페이지, 최신순), 단건 조회, 생성, 수정, 삭제.
 - **댓글(Comment)** CRUD — 게시글별 댓글 목록(페이지, 오래된순), 생성, 수정, 삭제.
 - **유레카 자기등록** — `eureka-server(:8761)`에 `board-service`로 등록. 게이트웨이가 `lb://board-service`로 이 등록을 해석해 라우팅한다. `prefer-ip-address: true`로 IP 등록(Windows/사설망 호스트명 DNS 해석 실패 회피).
-- **JWT 자체 검증** — `auth-server(:9000)`의 JWKS(RS256 공개키)로 서명을 검증하고, issuer·audience까지 추가 검증한다. 게이트웨이는 토큰을 검증하지 않는다(각 서비스 책임).
+- **JWT 이중 검증** — gateway-server가 무효 토큰을 먼저 차단하고, board-service도
+  `auth-server(:9000)`의 JWKS로 서명·issuer·audience를 다시 검증한다. 게이트웨이 검증이
+  서비스의 최종 검증을 대체하지 않는다.
 - **인가** — 조회(GET)는 공개, 생성/수정/삭제는 인증 필요. 수정·삭제는 **작성자 본인 또는 ADMIN**만 가능(서비스 계층 `AccessGuard`).
 - **CORS는 게이트웨이가 담당한다.** board-service는 CORS를 직접 설정하지 않는다.
 
 ---
 
-## 기술 스택 (실측)
+## 기술 스택
 
 | 항목 | 값 |
 |---|---|
@@ -71,7 +73,7 @@
 
 ---
 
-## JWT 검증 방식 (JWKS — 코드 실측)
+## JWT 검증 방식 (JWKS)
 
 `SecurityConfig`는 Resource Server로 동작하며, 다음 3단계로 토큰을 검증한다.
 
@@ -88,7 +90,7 @@
 
 ---
 
-## 데이터 모델 (엔티티 실측)
+## 데이터 모델
 
 `GenerationType.IDENTITY`(DB auto-increment). 작성자 정보(`author_id`, `author_name`)는 JWT에서 추출해 저장하며, 외부 사용자 서비스로 조인하지 않는다.
 
@@ -143,9 +145,9 @@
 
 ---
 
-## 실행 방법
+## 빠른 시작
 
-**전제:** Keycloak + Postgres가 먼저 떠 있어야 한다 → [`../infra/README.md`](../infra/README.md). auth-server(:9000)도 기동 상태여야 한다(JWKS 필요). 유레카(:8761)는 등록 대상 — 없어도 기동은 되나 게이트웨이 라우팅은 등록 후 활성화.
+**전제:** Keycloak + Postgres가 먼저 떠 있어야 한다 → [infra README](https://github.com/chanho4702/infra-settings/blob/main/infra/README.md). auth-server(:9000)도 기동 상태여야 한다(JWKS 필요). 유레카(:8761)는 등록 대상 — 없어도 기동은 되나 게이트웨이 라우팅은 등록 후 활성화.
 
 ### gradlew bootRun
 
@@ -208,7 +210,7 @@ board-service/
 
 ## 복제해 새 도메인 서비스를 만들 때 바꿀 것
 
-이 서비스를 그대로 복사해 예: `order-service`를 만든다고 할 때 손댈 지점(실측 기반):
+이 서비스를 그대로 복사해 예: `order-service`를 만든다고 할 때 손댈 지점:
 
 1. **`settings.gradle` / `build.gradle`** — `rootProject.name`, `group` 유지, 필요 시 의존성 가감.
 2. **패키지명** — `com.platform.boardservice` → `com.platform.orderservice`, `BoardServiceApplication` 클래스명.
