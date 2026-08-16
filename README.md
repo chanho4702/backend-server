@@ -1,5 +1,11 @@
 # board-service
 
+[![CI](https://github.com/chanho4702/backend-server/actions/workflows/ci.yml/badge.svg)](https://github.com/chanho4702/backend-server/actions/workflows/ci.yml)
+![Java](https://img.shields.io/badge/Java-24-ED8B00?logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.6-6DB33F?logo=springboot&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-boarddb-4169E1?logo=postgresql&logoColor=white)
+![OAuth 2.0](https://img.shields.io/badge/OAuth%202.0-Resource%20Server-3C3C3D)
+
 게시글과 댓글을 관리하는 **게시판 마이크로서비스** (`:9100`).
 모든 요청은 `gateway-server(:8000)`를 통해 `/api/board/**`로 라우팅된다.
 
