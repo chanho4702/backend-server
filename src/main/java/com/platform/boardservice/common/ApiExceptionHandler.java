@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.Map;
 
+/** board는 {error: 코드, message} 모양을 쓴다(myFront 계약) — 스타터의 {error} 핸들러보다 먼저 잡는다. */
+@org.springframework.core.annotation.Order(0)
 @RestControllerAdvice
 public class ApiExceptionHandler {
 

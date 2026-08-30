@@ -6,7 +6,17 @@ plugins {
 group = 'com.platform'
 version = '0.0.1-SNAPSHOT'
 java { toolchain { languageVersion = JavaLanguageVersion.of(24) } }
-repositories { mavenCentral() }
+repositories {
+    mavenCentral()
+    // common-starter 소비 — GitHub Packages (로컬: GITHUB_TOKEN env, CI: GH_PACKAGES_TOKEN 시크릿)
+    maven {
+        url = uri('https://maven.pkg.github.com/chanho4702/platform-backend')
+        credentials {
+            username = System.getenv('GITHUB_ACTOR') ?: 'chanho4702'
+            password = System.getenv('GITHUB_TOKEN') ?: providers.gradleProperty('gpr.token').getOrElse('')
+        }
+    }
+}
 
 ext {
     set('springCloudVersion', '2025.1.2')
@@ -22,6 +32,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+    // JWT 검증(issuer·audience)·roles 변환은 스타터가 준다(S-02). 오류 계약은 board가 자기 모양을 유지한다
+    implementation 'com.platform:common-starter:0.14.0'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-flyway'

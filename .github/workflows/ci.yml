@@ -20,6 +20,9 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4   # gradle 캐시
       - run: chmod +x gradlew                  # Windows에서 커밋된 실행비트 보정
       - run: ./gradlew test bootJar --no-daemon
+        env:
+          # common-starter(GitHub Packages) 읽기 — alm-backend와 같은 시크릿
+          GITHUB_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
 
       - name: Login GHCR
         if: github.ref == 'refs/heads/main'
