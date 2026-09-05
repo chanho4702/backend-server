@@ -33,7 +33,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
     // JWT 검증(issuer·audience)·roles 변환은 스타터가 준다(S-02). 오류 계약은 board가 자기 모양을 유지한다
-    implementation 'com.platform:common-starter:0.15.0'
+    implementation 'com.platform:common-starter:0.16.0'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-flyway'
