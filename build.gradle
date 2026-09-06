@@ -30,6 +30,8 @@ dependencies {
     // 유레카 자기등록 — 게이트웨이 lb://board-service가 이 등록을 바라본다
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    // 헬스/빌드정보만 노출한다 — 내부망 전용(게이트웨이 관리자 대시보드가 프로브한다)
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
     // JWT 검증(issuer·audience)·roles 변환은 스타터가 준다(S-02). 오류 계약은 board가 자기 모양을 유지한다
@@ -47,5 +49,8 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'com.h2database:h2'
 }
+// /actuator/info의 build.version — 대시보드가 배포된 버전을 읽는다
+springBoot { buildInfo() }
+
 tasks.named('test') { useJUnitPlatform() }
 tasks.named('bootJar') { archiveFileName = 'app.jar' }

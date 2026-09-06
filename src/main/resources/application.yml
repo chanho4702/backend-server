@@ -3,6 +3,14 @@ server:
 spring:
   application:
     name: board-service
+  cloud:
+    discovery:
+      client:
+        # 서비스 health는 자기 상태(db)만 본다 — 유레카/디스커버리 상태는 게이트웨이 대시보드가
+        # eureka 컴포넌트로 따로 프로브한다(설계 §3). 켜 두면 유레카가 잠깐 흔들릴 때
+        # 서비스 전체가 DOWN으로 보인다.
+        health-indicator:
+          enabled: false
   # 모든 자격증명/URL은 env로 오버라이드 가능. 기본값은 로컬 dev 전용 — 운영에서는 반드시 주입.
   datasource:
     url: ${BOARD_DB_URL:jdbc:postgresql://localhost:5433/boarddb}
@@ -34,3 +42,20 @@ platform:
     # auth-server가 발급하는 자체 AT의 issuer/audience — 서명 외 추가 검증에 사용.
     issuer: ${PLATFORM_ISSUER:http://localhost:9000}
     audience: ${PLATFORM_AUDIENCE:platform-api}
+
+# Actuator — 내부망 전용. 게이트웨이 관리자 대시보드(/api/platform/health)가 20초 캐시로 프로브한다.
+# health·info 둘만 노출하고(SecurityFilterChain에서 이 둘만 permitAll), 관리 포트는 따로 두지 않는다.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always   # 게이트웨이가 components.db 상태를 읽는다
+  info:
+    build:
+      enabled: true          # springBoot { buildInfo() }가 만든 build-info.properties
+  health:
+    eureka:
+      enabled: false         # 위와 같은 이유 — 유레카는 대시보드가 따로 본다
