@@ -25,8 +25,9 @@ public class PostController {
 
     @GetMapping
     public Page<PostSummaryResponse> list(
+            @RequestParam(required = false) String q,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return service.list(pageable);
+        return service.list(q, pageable);
     }
 
     @GetMapping("/{id}")

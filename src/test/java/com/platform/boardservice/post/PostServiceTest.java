@@ -31,6 +31,11 @@ class PostServiceTest {
     }
 
     @Test
+    void likePatternEscapesWildcardsAndLowercases() {
+        assertThat(PostService.likePattern("A%b_C\\d")).isEqualTo("%a\\%b\\_c\\\\d%");
+    }
+
+    @Test
     void getMissingThrowsNotFound() {
         assertThatThrownBy(() -> service.get(999L)).isInstanceOf(NotFoundException.class);
     }

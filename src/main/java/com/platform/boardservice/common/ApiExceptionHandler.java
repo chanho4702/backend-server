@@ -26,6 +26,12 @@ public class ApiExceptionHandler {
                 .body(Map.of("error", "forbidden", "message", e.getMessage()));
     }
 
+    @ExceptionHandler(InvalidQueryException.class)
+    ResponseEntity<Map<String, Object>> invalidQuery(InvalidQueryException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", "validation_failed", "message", e.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<Map<String, Object>> invalid(MethodArgumentNotValidException e) {
         String msg = e.getBindingResult().getAllErrors().get(0).getDefaultMessage();

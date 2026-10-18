@@ -99,4 +99,89 @@ class PostControllerTest {
     void missingPostReturns404() throws Exception {
         mvc.perform(get("/api/board/posts/999999")).andExpect(status().isNotFound());
     }
+
+    // ── F-23 검색(q) ──────────────────────────────────────────────
+
+    private void createPostWith(String title, String content) throws Exception {
+        mvc.perform(post("/api/board/posts").with(asUser(42L, "Alice"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"" + json(title) + "\",\"content\":\"" + json(content) + "\"}"))
+                .andExpect(status().isCreated());
+    }
+
+    private static String json(String v) {
+        return v.replace("\\", "\\\\").replace("\"", "\\\"");
+    }
+
+    private static String marker() {
+        return "mk" + java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 10);
+    }
+
+    @Test
+    void searchMatchesTitleOnlyMatchingPosts() throws Exception {
+        String m = marker();
+        createPostWith("배포 " + m + " 1차", "본문");
+        createPostWith("배포 " + m + " 2차", "본문");
+        createPostWith("회의록", "본문");
+        mvc.perform(get("/api/board/posts").param("q", "배포 " + m))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.content.length()").value(2));
+    }
+
+    @Test
+    void searchMatchesContentCaseInsensitive() throws Exception {
+        String m = marker();
+        createPostWith("제목", "본문에 " + m.toUpperCase() + " 포함");
+        mvc.perform(get("/api/board/posts").param("q", m))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    @Test
+    void searchEscapesLikeWildcards() throws Exception {
+        String m = marker();
+        createPostWith("100% " + m, "본문");
+        createPostWith("100 " + m, "본문");
+        createPostWith("a_b " + m, "본문");
+        createPostWith("axb " + m, "본문");
+        createPostWith("back\\slash " + m, "본문");
+        mvc.perform(get("/api/board/posts").param("q", "% " + m))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].title").value("100% " + m));
+        mvc.perform(get("/api/board/posts").param("q", "a_b " + m))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].title").value("a_b " + m));
+        mvc.perform(get("/api/board/posts").param("q", "k\\slash " + m))
+                .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    @Test
+    void searchKeepsPaging() throws Exception {
+        String m = marker();
+        for (int i = 0; i < 3; i++) createPostWith("페이징 " + m + " " + i, "본문");
+        mvc.perform(get("/api/board/posts").param("q", m).param("size", "2").param("page", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(3))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.number").value(1))
+                .andExpect(jsonPath("$.content.length()").value(1));
+    }
+
+    @Test
+    void blankQueryListsEverything() throws Exception {
+        createPostWith("아무 글 " + marker(), "본문");
+        String all = mvc.perform(get("/api/board/posts")).andReturn().getResponse().getContentAsString();
+        long total = com.jayway.jsonpath.JsonPath.parse(all).read("$.totalElements", Long.class);
+        mvc.perform(get("/api/board/posts").param("q", "   "))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(total));
+    }
+
+    @Test
+    void tooLongQueryIsRejected() throws Exception {
+        mvc.perform(get("/api/board/posts").param("q", "x".repeat(101)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("validation_failed"));
+    }
 }

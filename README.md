@@ -52,7 +52,7 @@
 
 | 메서드 | 경로 | 인증 | 설명 |
 |---|---|---|---|
-| GET | `/api/board/posts` | - | 게시글 목록. 페이지(기본 size 20, `createdAt` DESC). 요약 필드만 반환 |
+| GET | `/api/board/posts` | - | 게시글 목록. 페이지(기본 size 20, `createdAt` DESC). 요약 필드만 반환. `q`(선택, 100자 이하)를 주면 제목·본문 부분 일치(대소문자 무시, `%`·`_`는 글자 그대로) — 100자 초과는 400 `validation_failed` |
 | GET | `/api/board/posts/{id}` | - | 게시글 단건 조회. 본문 포함 |
 | POST | `/api/board/posts` | Bearer | 게시글 생성 (201 Created) |
 | PUT | `/api/board/posts/{id}` | Bearer | 게시글 수정 (작성자 본인 또는 ADMIN) |
