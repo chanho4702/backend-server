@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.*;
 
 @DataJpaTest
 @ActiveProfiles("test")
-@Import({CommentService.class, AccessGuard.class})
+@Import({CommentService.class, AccessGuard.class, com.platform.boardservice.org.FakeOrgClient.class})
 class CommentServiceTest {
 
     @Autowired CommentService service;

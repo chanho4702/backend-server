@@ -24,6 +24,7 @@ repositories {
 ext {
     set('springCloudVersion', '2025.1.2')
 }
+def grpcVersion = '1.69.0'
 dependencyManagement {
     imports {
         mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
@@ -39,6 +40,10 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
     // JWT 검증(issuer·audience)·roles 변환은 스타터가 준다(S-02). 오류 계약은 board가 자기 모양을 유지한다
     implementation 'com.platform:common-starter:0.17.0'
+    // org-service gRPC(계정 상태 GetMembers·전역 관리자 CheckPermission) — 공유 아티팩트는 하나(wiki·alm·agent와 같은 발행본)
+    implementation 'com.platform:common-proto:0.17.0'
+    implementation "io.grpc:grpc-netty-shaded:${grpcVersion}"
+    implementation 'com.github.ben-manes.caffeine:caffeine'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-flyway'
@@ -50,6 +55,7 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-data-jpa-test'
     testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation "io.grpc:grpc-inprocess:${grpcVersion}"
     testRuntimeOnly 'com.h2database:h2'
 }
 // /actuator/info의 build.version — 대시보드가 배포된 버전을 읽는다

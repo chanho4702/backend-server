@@ -45,7 +45,7 @@ class ErrorContractPrecedenceTest {
 
     @Test
     void 없는_글은_board_모양_404() throws Exception {
-        mvc.perform(get("/api/board/posts/987654321"))
+        mvc.perform(get("/api/board/posts/987654321").with(asUser(1)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("not_found"))
                 .andExpect(jsonPath("$.message").isNotEmpty());
@@ -80,7 +80,7 @@ class ErrorContractPrecedenceTest {
      */
     @Test
     void 경로_형식_오류는_스타터_문구_400() throws Exception {
-        mvc.perform(get("/api/board/posts/abc"))
+        mvc.perform(get("/api/board/posts/abc").with(asUser(1)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("요청 값의 형식이 올바르지 않습니다"));
     }

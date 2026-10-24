@@ -12,3 +12,6 @@ eureka:
   client:
     service-url:
       defaultZone: http://localhost:18761/eureka
+platform:
+  org-grpc:
+    port: 19131   # dev org-service gRPC(+10000)

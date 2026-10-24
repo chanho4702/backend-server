@@ -17,10 +17,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DataJpaTest
 @ActiveProfiles("test")
-@Import({PostService.class, AccessGuard.class})
+@Import({PostService.class, AccessGuard.class, com.platform.boardservice.org.FakeOrgClient.class})
 class PostServiceTest {
 
     @Autowired PostService service;
+    @Autowired com.platform.boardservice.org.FakeOrgClient orgFake;
 
     @Test
     void createsPostWithAuthorFromToken() {
@@ -62,9 +63,19 @@ class PostServiceTest {
 
     @Test
     void adminCanDeleteOthersPost() {
+        orgFake.grantAdmin(1L); // 관리자 = org 전역 관리자(M1)
         var created = service.create(new com.platform.boardservice.post.dto.PostCreateRequest("t", "c"),
                 TestAuth.user(42L, "Alice"));
         service.delete(created.id(), TestAuth.admin(1L, "Root"));
         assertThatThrownBy(() -> service.get(created.id())).isInstanceOf(NotFoundException.class);
+    }
+
+    /** KC realm ROLE_ADMIN만 있고 org 전역 관리자가 아니면 남의 글을 못 지운다(M1 — 관리자 이원화 제거) */
+    @Test
+    void realmAdminWithoutOrgGlobalAdminCannotDeleteOthersPost() {
+        var created = service.create(new com.platform.boardservice.post.dto.PostCreateRequest("t", "c"),
+                TestAuth.user(42L, "Alice"));
+        assertThatThrownBy(() -> service.delete(created.id(), TestAuth.admin(2L, "RealmOnly")))
+                .isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
     }
 }

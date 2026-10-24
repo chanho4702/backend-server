@@ -1,5 +1,6 @@
 package com.platform.boardservice.common;
 
+import com.platform.common.error.ServiceUnavailableException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -24,6 +25,13 @@ public class ApiExceptionHandler {
     ResponseEntity<Map<String, Object>> denied(AccessDeniedException e) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(Map.of("error", "forbidden", "message", e.getMessage()));
+    }
+
+    /** org 불능(계정 상태 게이트·관리자 판정) — 권한 없음(403)이나 빈 목록으로 위장하지 않는다. */
+    @ExceptionHandler(ServiceUnavailableException.class)
+    ResponseEntity<Map<String, Object>> unavailable(ServiceUnavailableException e) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(Map.of("error", "service_unavailable", "message", e.getMessage()));
     }
 
     @ExceptionHandler(InvalidQueryException.class)

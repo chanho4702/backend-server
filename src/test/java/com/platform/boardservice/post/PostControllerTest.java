@@ -21,11 +21,21 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class PostControllerTest {
 
     @Autowired WebApplicationContext context;
+    @Autowired com.platform.boardservice.org.FakeOrgClient orgFake;
+    @Autowired com.platform.boardservice.security.AccountStatusInterceptor gate;
     MockMvc mvc;
 
     @BeforeEach
     void setup() {
         mvc = MockMvcBuilders.webAppContextSetup(context).apply(springSecurity()).build();
+        orgFake.reset();
+        gate.evictAll();
+    }
+
+    @org.junit.jupiter.api.AfterEach
+    void cleanup() {
+        orgFake.reset();
+        gate.evictAll();
     }
 
     // sub=userId, ROLE을 명시(jwt() post-processor는 컨버터를 거치지 않으므로 authorities 직접 지정).
@@ -49,8 +59,15 @@ class PostControllerTest {
     }
 
     @Test
-    void listIsPublic() throws Exception {
-        mvc.perform(get("/api/board/posts")).andExpect(status().isOk());
+    void listRequiresLoginByDefault() throws Exception {
+        // 익명 열람은 BOARD_ANONYMOUS_READ=true일 때만(B1) — 기본은 401
+        mvc.perform(get("/api/board/posts")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/board/posts/1")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void listForActiveUser() throws Exception {
+        mvc.perform(get("/api/board/posts").with(asUser(42L, "Alice"))).andExpect(status().isOk());
     }
 
     @Test
@@ -90,6 +107,7 @@ class PostControllerTest {
 
     @Test
     void adminCanDeleteOthersPost() throws Exception {
+        orgFake.grantAdmin(1L); // 관리자 = org 전역 관리자(M1)
         Long id = createPost(42L);
         mvc.perform(delete("/api/board/posts/" + id).with(asAdmin(1L, "Root")))
                 .andExpect(status().isNoContent());
@@ -97,7 +115,7 @@ class PostControllerTest {
 
     @Test
     void missingPostReturns404() throws Exception {
-        mvc.perform(get("/api/board/posts/999999")).andExpect(status().isNotFound());
+        mvc.perform(get("/api/board/posts/999999").with(asUser(42L, "Alice"))).andExpect(status().isNotFound());
     }
 
     // ── F-23 검색(q) ──────────────────────────────────────────────
@@ -123,7 +141,7 @@ class PostControllerTest {
         createPostWith("배포 " + m + " 1차", "본문");
         createPostWith("배포 " + m + " 2차", "본문");
         createPostWith("회의록", "본문");
-        mvc.perform(get("/api/board/posts").param("q", "배포 " + m))
+        mvc.perform(get("/api/board/posts").with(asUser(42L, "Alice")).param("q", "배포 " + m))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(2))
                 .andExpect(jsonPath("$.content.length()").value(2));
@@ -133,7 +151,7 @@ class PostControllerTest {
     void searchMatchesContentCaseInsensitive() throws Exception {
         String m = marker();
         createPostWith("제목", "본문에 " + m.toUpperCase() + " 포함");
-        mvc.perform(get("/api/board/posts").param("q", m))
+        mvc.perform(get("/api/board/posts").with(asUser(42L, "Alice")).param("q", m))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(1));
     }
@@ -146,13 +164,13 @@ class PostControllerTest {
         createPostWith("a_b " + m, "본문");
         createPostWith("axb " + m, "본문");
         createPostWith("back\\slash " + m, "본문");
-        mvc.perform(get("/api/board/posts").param("q", "% " + m))
+        mvc.perform(get("/api/board/posts").with(asUser(42L, "Alice")).param("q", "% " + m))
                 .andExpect(jsonPath("$.totalElements").value(1))
                 .andExpect(jsonPath("$.content[0].title").value("100% " + m));
-        mvc.perform(get("/api/board/posts").param("q", "a_b " + m))
+        mvc.perform(get("/api/board/posts").with(asUser(42L, "Alice")).param("q", "a_b " + m))
                 .andExpect(jsonPath("$.totalElements").value(1))
                 .andExpect(jsonPath("$.content[0].title").value("a_b " + m));
-        mvc.perform(get("/api/board/posts").param("q", "k\\slash " + m))
+        mvc.perform(get("/api/board/posts").with(asUser(42L, "Alice")).param("q", "k\\slash " + m))
                 .andExpect(jsonPath("$.totalElements").value(1));
     }
 
@@ -160,7 +178,7 @@ class PostControllerTest {
     void searchKeepsPaging() throws Exception {
         String m = marker();
         for (int i = 0; i < 3; i++) createPostWith("페이징 " + m + " " + i, "본문");
-        mvc.perform(get("/api/board/posts").param("q", m).param("size", "2").param("page", "1"))
+        mvc.perform(get("/api/board/posts").with(asUser(42L, "Alice")).param("q", m).param("size", "2").param("page", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(3))
                 .andExpect(jsonPath("$.totalPages").value(2))
@@ -171,16 +189,16 @@ class PostControllerTest {
     @Test
     void blankQueryListsEverything() throws Exception {
         createPostWith("아무 글 " + marker(), "본문");
-        String all = mvc.perform(get("/api/board/posts")).andReturn().getResponse().getContentAsString();
+        String all = mvc.perform(get("/api/board/posts").with(asUser(42L, "Alice"))).andReturn().getResponse().getContentAsString();
         long total = com.jayway.jsonpath.JsonPath.parse(all).read("$.totalElements", Long.class);
-        mvc.perform(get("/api/board/posts").param("q", "   "))
+        mvc.perform(get("/api/board/posts").with(asUser(42L, "Alice")).param("q", "   "))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(total));
     }
 
     @Test
     void tooLongQueryIsRejected() throws Exception {
-        mvc.perform(get("/api/board/posts").param("q", "x".repeat(101)))
+        mvc.perform(get("/api/board/posts").with(asUser(42L, "Alice")).param("q", "x".repeat(101)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("validation_failed"));
     }

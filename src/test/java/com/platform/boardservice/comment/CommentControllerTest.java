@@ -63,10 +63,17 @@ class CommentControllerTest {
     }
 
     @Test
-    void listIsPublic() throws Exception {
+    void listRequiresLoginByDefault() throws Exception {
+        Long postId = createPost(42L);
+        mvc.perform(get("/api/board/posts/" + postId + "/comments"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void listForActiveUser() throws Exception {
         Long postId = createPost(42L);
         createComment(postId, 7L);
-        mvc.perform(get("/api/board/posts/" + postId + "/comments"))
+        mvc.perform(get("/api/board/posts/" + postId + "/comments").with(asUser(8L, "Carol")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(1));
     }

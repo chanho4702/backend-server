@@ -38,6 +38,16 @@ eureka:
     prefer-ip-address: true
 
 platform:
+  board:
+    # 익명 열람(GET /api/board/posts/**) — 기본은 로그인 필요(B1). true면 토큰 없는 GET을 연다(설치 옵션).
+    # 토큰을 단 요청은 어느 쪽이든 계정 상태 게이트(org ACTIVE만)를 탄다.
+    anonymous-read: ${BOARD_ANONYMOUS_READ:false}
+  # org-service gRPC — 계정 상태(GetMembers)·전역 관리자(CheckPermission GLOBAL/ADMIN). 위키·ALM·agent와 같은 env.
+  # 서비스 간 토큰 PLATFORM_GRPC_TOKEN은 common-starter가 env에서 바로 읽는다(여기 키 없음).
+  org-grpc:
+    host: ${ORG_GRPC_HOST:localhost}
+    port: ${ORG_GRPC_PORT:9131}
+    deadline-seconds: ${ORG_GRPC_DEADLINE_SECONDS:2}
   jwt:
     # auth-server가 발급하는 자체 AT의 issuer/audience — 서명 외 추가 검증에 사용.
     issuer: ${PLATFORM_ISSUER:http://localhost:9000}
