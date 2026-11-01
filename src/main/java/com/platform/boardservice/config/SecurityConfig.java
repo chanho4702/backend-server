@@ -1,5 +1,6 @@
 package com.platform.boardservice.config;
 
+import com.platform.common.security.PlatformSecurityErrorHandlers;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -36,7 +37,14 @@ public class SecurityConfig {
                     }
                     auth.anyRequest().authenticated();
                 })
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(converter)));
+                // 401/403에도 플랫폼 본문 {"error"}를 싣는다(P-11). Security 기본은 본문이 없다.
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(converter))
+                        .authenticationEntryPoint(PlatformSecurityErrorHandlers.authenticationEntryPoint())
+                        .accessDeniedHandler(PlatformSecurityErrorHandlers.accessDeniedHandler()))
+                .exceptionHandling(e -> e
+                        .authenticationEntryPoint(PlatformSecurityErrorHandlers.authenticationEntryPoint())
+                        .accessDeniedHandler(PlatformSecurityErrorHandlers.accessDeniedHandler()));
         return http.build();
     }
 }
