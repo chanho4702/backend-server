@@ -30,8 +30,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> {
                     // 내부망 전용 헬스/빌드정보 — 게이트웨이 대시보드가 인증 없이 프로브한다.
-                    // 노출은 이 둘뿐이다(management.endpoints.web.exposure.include).
-                    auth.requestMatchers("/actuator/health", "/actuator/info").permitAll();
+                    // 노출은 이 셋뿐이다(management.endpoints.web.exposure.include). prometheus는 Alloy가 긁는다.
+                    auth.requestMatchers("/actuator/health", "/actuator/info", "/actuator/prometheus").permitAll();
                     if (anonymousRead) {
                         auth.requestMatchers(HttpMethod.GET, "/api/board/posts/**").permitAll();
                     }

@@ -54,12 +54,16 @@ platform:
     audience: ${PLATFORM_AUDIENCE:platform-api}
 
 # Actuator — 내부망 전용. 게이트웨이 관리자 대시보드(/api/platform/health)가 20초 캐시로 프로브한다.
-# health·info 둘만 노출하고(SecurityFilterChain에서 이 둘만 permitAll), 관리 포트는 따로 두지 않는다.
+# health·info·prometheus만 노출하고(SecurityFilterChain에서 이 셋만 permitAll), 관리 포트는 따로 두지 않는다.
+# prometheus는 Alloy가 도커 내부망에서 긁는 메트릭이다(infra-settings observability).
 management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}   # 모든 미터에 서비스 이름 태그(Grafana 서비스별 분리)
   endpoint:
     health:
       show-details: always   # 게이트웨이가 components.db 상태를 읽는다
